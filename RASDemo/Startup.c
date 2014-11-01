@@ -25,13 +25,6 @@
 #include <StellarisWare/inc/hw_types.h>
 
 
-// Size of the stack in word count
-#define STACK 128
-
-// Reserve space for the system stack
-static unsigned long pulStack[STACK];
-
-
 // Initialization entry point for RASLib
 extern void InitializeMCU(void);
 
@@ -80,7 +73,7 @@ extern void I2C5Handler(void);
 // ensure that it ends up at physical address 0x00000000
 __attribute__((section(".isr_vector")))
 void (* const __Vectors[])(void) = {
-    (void (*)())(pulStack + STACK),         // The initial stack pointer
+    (void (*)())(0x20008000),         // The initial stack pointer
     ResetHandler,                           // The reset handler
     NmiHandler,                             // The NMI handler
     FaultHandler,                           // The hard fault handler
@@ -317,14 +310,14 @@ void ResetHandler(void) {
 
 // This is the code that gets called when the processor receives a NMI.  This
 // must pass through to avoid a race condition during startup
-static void NmiHandler(void) {
+void NmiHandler(void) {
     // Pass through
 }
 
 // This is the code that gets called when the processor receives a fault
 // interrupt.  This simply enters an infinite loop, preserving the system state
 // for examination by a debugger.
-static void FaultHandler(void) {
+void FaultHandler(void) {
     // Panic
     PanicHandler();
     // Enter an infinite loop
@@ -334,7 +327,7 @@ static void FaultHandler(void) {
 // This is the code that gets called when the processor receives an unexpected
 // interrupt.  This simply enters an infinite loop, preserving the system state
 // for examination by a debugger.
-static void IntDefaultHandler(void) {
+void IntDefaultHandler(void) {
     // Panic
     PanicHandler();
     // Go into an infinite loop

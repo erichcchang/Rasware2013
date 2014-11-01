@@ -44,6 +44,8 @@
 static const char *upper = "0123456789ABCDEF";
 static const char *lower = "0123456789abcdef";
 
+static tBoolean hack_offset;
+
 // Sets up a simple console through UART0
 void InitializeUART(int baud) {
   // Enable GPIO port A which is used for UART0 pins.
@@ -61,6 +63,15 @@ void InitializeUART(int baud) {
   UARTConfigSetExpClk(UART0_BASE, SysCtlClockGet(), baud,
 			  (UART_CONFIG_PAR_NONE | UART_CONFIG_STOP_ONE |
 			   UART_CONFIG_WLEN_8));
+    
+  // Default to assuming the offset makes sense
+  hack_offset = false;
+}
+
+static tBoolean DoubleTest(int, ...);
+void InitializeDoublePrintHack(void) {
+    // Just try the offset and see if its wrong
+    hack_offset ^= !DoubleTest(1, 1.0f);
 }
 
 
@@ -191,7 +202,6 @@ unsigned int Scanf(const char * formatString, ... ) {
   unsigned int braket_len;
   unsigned int * i_ptr;
   float * f_ptr;
-  float f_tmp;
   va_list ap;
   va_start(ap, formatString);
   while (formatString[++i] != '\0') {
@@ -245,7 +255,6 @@ unsigned int Scanf(const char * formatString, ... ) {
 	    goto octal; } }
 	else
 	  goto decimal;
-	break;
       case 'o':
       octal:
 	i_ptr = va_arg(ap, unsigned int *);
@@ -359,7 +368,6 @@ int KeyWasPressed(void) {
 #define va_d2f(args) DoubleFloat(&args.__ap)
 
 static float DoubleFloat(void **args) {
-
     unsigned int a, b;
     int exp;
 
@@ -367,8 +375,8 @@ static float DoubleFloat(void **args) {
         float f;
         unsigned int i;
     } num;
-#ifdef __CC_ARM
-    if (!(((unsigned int)(*args)) & 0x4)) {
+
+    if ((((unsigned int)(*args) & 0x4) == 0x4) ^ hack_offset) {
         a = (*(unsigned int **)args)[2];
         b = (*(unsigned int **)args)[1];
         (*(unsigned int **)args) += 3;
@@ -377,17 +385,6 @@ static float DoubleFloat(void **args) {
         b = (*(unsigned int **)args)[0];
         (*(unsigned int **)args) += 2;
     }
-#else 
-    if (!(((unsigned int)(*args)) & 0x4)) {
-        b = (*(unsigned int **)args)[2];
-        a = (*(unsigned int **)args)[1];
-        (*(unsigned int **)args) += 3;
-    } else {
-        b = (*(unsigned int **)args)[1];
-        a = (*(unsigned int **)args)[0];
-        (*(unsigned int **)args) += 2;
-    }
-#endif
 
     
     exp = (0x7ff & (a >> 20)) - 1023 + 127;
@@ -401,6 +398,16 @@ static float DoubleFloat(void **args) {
 
     
     return num.f;
+}
+
+static tBoolean DoubleTest(int eh, ...) {
+    float test;
+    va_list args;
+    va_start(args, eh);
+    test = va_d2f(args);
+    va_end(args);
+    
+    return eh == (int)test;
 }
 
 
@@ -556,7 +563,6 @@ static void PutScienceFloat(float f, const char *table, int left, int sign, int 
         PutString("inf", left, width, 3);
     } else {
         float exp = floorf(log10f(f));
-        float base = f / powf(10, exp);
         
         int height;
         if (left) {
