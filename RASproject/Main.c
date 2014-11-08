@@ -4,6 +4,7 @@
 #include <RASLib/inc/adc.h>
 #include <RASLib/inc/motor.h>
 #include <RasLib/inc/linesensor.h>
+#include "SysTick.h"
 
 tADC *adc[3];
 //tMotor *servomotor[2];
@@ -85,8 +86,8 @@ void figureEight(void) {
 					SetMotor(leftmotor, .2); 
 					SetMotor(rightmotor, 1);
 				}else if (wasLeft){
-					SetMotor(leftmotor, .2); 
-					SetMotor(rightmotor, 1);
+					SetMotor(leftmotor, 1); 
+					SetMotor(rightmotor, .2);
 				}
 			}
 			else{
