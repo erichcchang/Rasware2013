@@ -19,11 +19,12 @@ int wasLeft = 0;
 int wasRight = 0;
 
 void figureEight(void);
+void followWall(void);
 
 
 
 void initIRSensor(void) {
-    adc[0] = InitializeADC(PIN_A5);
+    adc[0] = InitializeADC(PIN_E5);
     adc[1] = InitializeADC(PIN_E4);
 	  adc[2] = InitializeADC(PIN_B4);
 }
@@ -48,11 +49,13 @@ int main(void) {
 		//SetMotor(servomotor[1], 1);	
 	
 		while(true){
-			figureEight();
+			followWall();
+			//SetMotor(leftMotor, -1);
+			//SetMotor(rightMotor, -1);
 		}
 }
 
-void followWall(void){
+void followWall(void){ // includes avoiding other robots
 	////get sensor values
 	frontSensor = ADCRead(adc[0])*1000;
 	rightSensor = ADCRead(adc[1])*1000;
@@ -60,45 +63,48 @@ void followWall(void){
 	
 	if (rightSensor>leftSensor) {			///follow whichever wall is closer
 		//////if right wall is closer
-		if(frontSensor > 600){					////back up and turn if wall ahead
+		if(frontSensor > 700){					////back up and turn if wall ahead
 			SetMotor(leftMotor, -1);
 			SetMotor(rightMotor, -1);
-			SysTick_Wait10ms(300);			//reverse for 3 seconds
+			SysTick_Wait10ms(70);			//reverse for 3 seconds
 			
 			SetMotor(leftMotor, -1);		//turn in place
 			SetMotor(rightMotor, 1);
+			SysTick_Wait10ms(80);
 			do {
-				frontSensor = ADCRead(adc[0])*1000;	//keep turning until nothing in front 
-			}while (frontSensor>300);
+				frontSensor = ADCRead(adc[0])*1000;	//keep turning until nothing in front
+				                                  	//turn in place
+			}while (frontSensor>400);
 		}
-		else if(rightSensor > 500){
-			SetMotor(leftMotor, -1);
-			SetMotor(rightMotor, 0);
+		else if(rightSensor > 600){
+			SetMotor(leftMotor, -.25);
+			SetMotor(rightMotor, .8);
 		}
 		else{
 			SetMotor(leftMotor, 1);
-			SetMotor(rightMotor, .6);
+			SetMotor(rightMotor, .25);
 		}
 	}
 	/////////if left wall is closer
 	else {												
-		if(frontSensor > 600){					////back up and turn if wall ahead
+		if(frontSensor > 700){					////back up and turn if wall ahead
 			SetMotor(leftMotor, -1);
 			SetMotor(rightMotor, -1);
-			SysTick_Wait10ms(300);			//reverse for 3 seconds
+			SysTick_Wait10ms(70);			//reverse for 3 seconds
 			
 			SetMotor(leftMotor, 1);		//turn in place
 			SetMotor(rightMotor, -1);
+			SysTick_Wait10ms(80);
 			do {
 				frontSensor = ADCRead(adc[0])*1000;	//keep turning until nothing in front 
-			}while (frontSensor>300);
+			}while (frontSensor>400);
 		}
-		else if(leftSensor > 500){
-			SetMotor(leftMotor, 0);
-			SetMotor(rightMotor, -1);
+		else if(leftSensor > 600){
+			SetMotor(leftMotor, .8);
+			SetMotor(rightMotor, -.25);
 		}
 		else{
-			SetMotor(leftMotor, .6);
+			SetMotor(leftMotor, .25);
 			SetMotor(rightMotor, 1);
 		}
 	}
@@ -183,5 +189,5 @@ void figureEight(void) {
 			}
 			
 }
-		
+
 
