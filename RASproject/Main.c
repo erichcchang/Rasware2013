@@ -55,6 +55,36 @@ int main(void) {
 		}
 }
 
+void findObject(void) {
+      // Runtime code can go here
+			int item = 0;
+      frontSensor = ADCRead(adc[0])*1000;
+			while (item == 0) {	
+				frontSensor = ADCRead(adc[0])*1000;
+				if (frontSensor < 200) {
+					SetMotor(rightMotor, -.1); //rotate
+					SetMotor(leftMotor, .1);
+				}else{
+					item = 1;
+				}
+			}
+			
+			SetMotor(rightMotor, 1); //get can
+			SetMotor(leftMotor, 1);
+			frontSensor = ADCRead(adc[0])*1000;
+			rightSensor = ADCRead(adc[1])*1000;
+			leftSensor = ADCRead(adc[2])*1000;
+
+			while (frontSensor < 850 && leftSensor < 850 && rightSensor < 850){
+					frontSensor = ADCRead(adc[0])*1000;
+					rightSensor = ADCRead(adc[1])*1000;
+					leftSensor = ADCRead(adc[2])*1000;
+			}
+					SetMotor(rightMotor, 0); //STOP 
+					SetMotor(leftMotor, 0);
+			while(1);
+}
+
 void followWall(void){ // includes avoiding other robots
 	////get sensor values
 	frontSensor = ADCRead(adc[0])*1000;
