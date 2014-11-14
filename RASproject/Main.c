@@ -8,8 +8,8 @@
 
 tADC *adc[3];
 //tMotor *servomotor[2];
-tMotor *rightmotor;
-tMotor *leftmotor;
+tMotor *rightMotor;
+tMotor *leftMotor;
 static tLineSensor *gls;
 float frontSensor;
 float leftSensor;
@@ -28,8 +28,8 @@ void initIRSensor(void) {
 	  adc[2] = InitializeADC(PIN_B4);
 }
 void initMotor(void) {
-		leftmotor = InitializeServoMotor(PIN_B6,false);			//left motor
-		rightmotor = InitializeServoMotor(PIN_B7,true);			//right motor
+		leftMotor = InitializeServoMotor(PIN_B6,false);			//left motor
+		rightMotor = InitializeServoMotor(PIN_B7,true);			//right motor
 }
 
 void initGPIOLineSensor(void) {
@@ -52,6 +52,91 @@ int main(void) {
 		}
 }
 
+void followWall(void){
+	////get sensor values
+	frontSensor = ADCRead(adc[0])*1000;
+	rightSensor = ADCRead(adc[1])*1000;
+	leftSensor = ADCRead(adc[2])*1000;
+	
+	if (rightSensor>leftSensor) {			///follow whichever wall is closer
+		//////if right wall is closer
+		if(frontSensor > 600){					////back up and turn if wall ahead
+			SetMotor(leftMotor, -1);
+			SetMotor(rightMotor, -1);
+			SysTick_Wait10ms(300);			//reverse for 3 seconds
+			
+			SetMotor(leftMotor, -1);		//turn in place
+			SetMotor(rightMotor, 1);
+			do {
+				frontSensor = ADCRead(adc[0])*1000;	//keep turning until nothing in front 
+			}while (frontSensor>300);
+		}
+		else if(rightSensor > 500){
+			SetMotor(leftMotor, -1);
+			SetMotor(rightMotor, 0);
+		}
+		else{
+			SetMotor(leftMotor, 1);
+			SetMotor(rightMotor, .6);
+		}
+	}
+	/////////if left wall is closer
+	else {												
+		if(frontSensor > 600){					////back up and turn if wall ahead
+			SetMotor(leftMotor, -1);
+			SetMotor(rightMotor, -1);
+			SysTick_Wait10ms(300);			//reverse for 3 seconds
+			
+			SetMotor(leftMotor, 1);		//turn in place
+			SetMotor(rightMotor, -1);
+			do {
+				frontSensor = ADCRead(adc[0])*1000;	//keep turning until nothing in front 
+			}while (frontSensor>300);
+		}
+		else if(leftSensor > 500){
+			SetMotor(leftMotor, 0);
+			SetMotor(rightMotor, -1);
+		}
+		else{
+			SetMotor(leftMotor, .6);
+			SetMotor(rightMotor, 1);
+		}
+	}
+}
+
+void followLine(void){
+	// put the values of the line sensor into the 'line' array 
+        LineSensorReadArray(gls, line);
+				
+				if((line[3]>0.5)||(line[4]>0.5)){
+						SetMotor(leftMotor, 1);
+						SetMotor(rightMotor, 1);
+				}
+				else if (line[5]>0.5){
+						SetMotor(leftMotor, 1);
+						SetMotor(rightMotor, .6);
+				}
+				else if (line[2]>0.5){
+						SetMotor(leftMotor, .6);
+						SetMotor(rightMotor, 1);
+				}
+				else if (line[6]>0.5){
+						SetMotor(leftMotor, 1);
+						SetMotor(rightMotor, .2);
+				}
+				else if (line[1]>0.5){
+						SetMotor(leftMotor, .2);
+						SetMotor(rightMotor, 1);
+				}				
+				else if (line[7]>0.5){
+						SetMotor(leftMotor, 1);
+						SetMotor(rightMotor, 0);
+				}
+				else if (line[0]>0.5){
+						SetMotor(leftMotor, 0);
+						SetMotor(rightMotor, 1);
+				}				
+}
 
 void figureEight(void) {
       // Runtime code can go here
@@ -61,74 +146,42 @@ void figureEight(void) {
 			
 			if(rightSensor > 300 && leftSensor < 300){	
 				if (rightSensor > 700){
-					SetMotor(rightmotor, .2); //TURN RIGHT
-					SetMotor(leftmotor, 1);
+					SetMotor(rightMotor, .2); //TURN RIGHT
+					SetMotor(leftMotor, 1);
 				}else{
-					SetMotor(rightmotor, .15); //TURN RIGHT
-					SetMotor(leftmotor, 1);
+					SetMotor(rightMotor, .15); //TURN RIGHT
+					SetMotor(leftMotor, 1);
 				}
 				wasRight = 1;
 				wasLeft = 0;
 			}
 			else if(leftSensor > 300 && rightSensor < 300){
 				if (leftSensor>700){
-					SetMotor(rightmotor, 1);
-					SetMotor(leftmotor,.2);
+					SetMotor(rightMotor, 1);
+					SetMotor(leftMotor,.2);
 				}else{
-					SetMotor(rightmotor, 1); //TURN LEFT
-					SetMotor(leftmotor, .15);
+					SetMotor(rightMotor, 1); //TURN LEFT
+					SetMotor(leftMotor, .15);
 				}
 				wasLeft = 1;
 				wasRight = 0;
 			}
 			else if (leftSensor>300 && rightSensor>300) {
 				if (wasRight){
-					SetMotor(leftmotor, .2); 
-					SetMotor(rightmotor, 1);
+					SetMotor(leftMotor, .2); 
+					SetMotor(rightMotor, 1);
 				}else if (wasLeft){
-					SetMotor(leftmotor, 1); 
-					SetMotor(rightmotor, .2);
+					SetMotor(leftMotor, 1); 
+					SetMotor(rightMotor, .2);
 				}
 			}
 			else{
-				SetMotor(leftmotor, 1);
-				SetMotor(rightmotor, 1);
+				SetMotor(leftMotor, 1);
+				SetMotor(rightMotor, 1);
 				wasLeft = 0;
 				wasRight = 0;
 			}
 			
 }
 		
-void followLine(void){
-	// put the values of the line sensor into the 'line' array 
-        LineSensorReadArray(gls, line);
-				
-				if((line[3]>0.5)||(line[4]>0.5)){
-						SetMotor(leftmotor, 1);
-						SetMotor(rightmotor, 1);
-				}
-				else if (line[5]>0.5){
-						SetMotor(leftmotor, 1);
-						SetMotor(rightmotor, .6);
-				}
-				else if (line[2]>0.5){
-						SetMotor(leftmotor, .6);
-						SetMotor(rightmotor, 1);
-				}
-				else if (line[6]>0.5){
-						SetMotor(leftmotor, 1);
-						SetMotor(rightmotor, .2);
-				}
-				else if (line[1]>0.5){
-						SetMotor(leftmotor, .2);
-						SetMotor(rightmotor, 1);
-				}				
-				else if (line[7]>0.5){
-						SetMotor(leftmotor, 1);
-						SetMotor(rightmotor, 0);
-				}
-				else if (line[0]>0.5){
-						SetMotor(leftmotor, 0);
-						SetMotor(rightmotor, 1);
-				}		
-}
+
