@@ -116,7 +116,7 @@ void followWall(void){ // includes avoiding other robots
 			SysTick_Wait10ms(70);			//reverse for 3 seconds
 			turn90Degrees(LEFT);
 		}
-		else if(rightSensor > 700){
+		else if(rightSensor > 600){
 			SetMotor(leftMotor, 0);
 			SetMotor(rightMotor, 1);
 		}
@@ -133,7 +133,7 @@ void followWall(void){ // includes avoiding other robots
 			SysTick_Wait10ms(70);			//reverse
 			turn90Degrees(RIGHT);
 		}
-		else if(leftSensor > 700){
+		else if(leftSensor > 600){
 			SetMotor(leftMotor, 1);
 			SetMotor(rightMotor, 0);
 		}
