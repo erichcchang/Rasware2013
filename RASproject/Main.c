@@ -6,6 +6,9 @@
 #include <RasLib/inc/linesensor.h>
 #include "SysTick.h"
 
+#define LEFT 1
+#define RIGHT -1
+
 tADC *adc[3];
 //tMotor *servomotor[2];
 tMotor *rightMotor;
@@ -85,6 +88,20 @@ void findObject(void) {
 			while(1);
 }
 
+
+void turn90Degrees(int dir){
+	if (dir == LEFT) {
+			SetMotor(leftMotor, -1);		
+			SetMotor(rightMotor, 1);
+			SysTick_Wait10ms(80);
+	}
+	if (dir == RIGHT){
+			SetMotor(leftMotor, 1);		
+			SetMotor(rightMotor, -1);
+			SysTick_Wait10ms(80);
+	}
+}
+
 void followWall(void){ // includes avoiding other robots
 	////get sensor values
 	frontSensor = ADCRead(adc[0])*1000;
@@ -97,18 +114,11 @@ void followWall(void){ // includes avoiding other robots
 			SetMotor(leftMotor, -1);
 			SetMotor(rightMotor, -1);
 			SysTick_Wait10ms(70);			//reverse for 3 seconds
-			
-			SetMotor(leftMotor, -1);		//turn in place
-			SetMotor(rightMotor, 1);
-			SysTick_Wait10ms(80);
-			do {
-				frontSensor = ADCRead(adc[0])*1000;	//keep turning until nothing in front
-				                                  	//turn in place
-			}while (frontSensor>400);
+			turn90Degrees(LEFT);
 		}
-		else if(rightSensor > 600){
-			SetMotor(leftMotor, -.25);
-			SetMotor(rightMotor, .8);
+		else if(rightSensor > 700){
+			SetMotor(leftMotor, 0);
+			SetMotor(rightMotor, 1);
 		}
 		else{
 			SetMotor(leftMotor, 1);
@@ -120,18 +130,12 @@ void followWall(void){ // includes avoiding other robots
 		if(frontSensor > 700){					////back up and turn if wall ahead
 			SetMotor(leftMotor, -1);
 			SetMotor(rightMotor, -1);
-			SysTick_Wait10ms(70);			//reverse for 3 seconds
-			
-			SetMotor(leftMotor, 1);		//turn in place
-			SetMotor(rightMotor, -1);
-			SysTick_Wait10ms(80);
-			do {
-				frontSensor = ADCRead(adc[0])*1000;	//keep turning until nothing in front 
-			}while (frontSensor>400);
+			SysTick_Wait10ms(70);			//reverse
+			turn90Degrees(RIGHT);
 		}
-		else if(leftSensor > 600){
-			SetMotor(leftMotor, .8);
-			SetMotor(rightMotor, -.25);
+		else if(leftSensor > 700){
+			SetMotor(leftMotor, 1);
+			SetMotor(rightMotor, 0);
 		}
 		else{
 			SetMotor(leftMotor, .25);
@@ -139,6 +143,8 @@ void followWall(void){ // includes avoiding other robots
 		}
 	}
 }
+
+
 
 void followLine(void){
 	// put the values of the line sensor into the 'line' array 
