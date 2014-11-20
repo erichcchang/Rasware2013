@@ -110,15 +110,15 @@ void followWall(void){ // includes avoiding other robots
 	
 	if (rightSensor>leftSensor) {			///follow whichever wall is closer
 		//////if right wall is closer
-		if(frontSensor > 700){					////back up and turn if wall ahead
+		if(frontSensor > 900){					////back up and turn if wall ahead
 			SetMotor(leftMotor, -1);
 			SetMotor(rightMotor, -1);
 			SysTick_Wait10ms(70);			//reverse for 3 seconds
 			turn90Degrees(LEFT);
 		}
-		else if(rightSensor > 600){
-			SetMotor(leftMotor, 0);
-			SetMotor(rightMotor, 1);
+		else if(rightSensor > 800){
+			SetMotor(leftMotor, -.25);
+			SetMotor(rightMotor, .8);
 		}
 		else{
 			SetMotor(leftMotor, 1);
@@ -127,15 +127,15 @@ void followWall(void){ // includes avoiding other robots
 	}
 	/////////if left wall is closer
 	else {												
-		if(frontSensor > 700){					////back up and turn if wall ahead
+		if(frontSensor > 900){					////back up and turn if wall ahead
 			SetMotor(leftMotor, -1);
 			SetMotor(rightMotor, -1);
 			SysTick_Wait10ms(70);			//reverse
 			turn90Degrees(RIGHT);
 		}
-		else if(leftSensor > 600){
-			SetMotor(leftMotor, 1);
-			SetMotor(rightMotor, 0);
+		else if(leftSensor > 650){
+			SetMotor(leftMotor, .8);
+			SetMotor(rightMotor, -.25);
 		}
 		else{
 			SetMotor(leftMotor, .25);
