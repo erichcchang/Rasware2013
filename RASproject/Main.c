@@ -5,6 +5,7 @@
 #include <RASLib/inc/motor.h>
 #include <RasLib/inc/linesensor.h>
 #include "SysTick.h"
+#include <stdbool.h>
 
 #define LEFT 1
 #define RIGHT -1
@@ -89,6 +90,7 @@ void findObject(void) {
 }
 
 
+
 void turn90Degrees(int dir){
 	if (dir == LEFT) {
 			SetMotor(leftMotor, -1);		
@@ -101,6 +103,7 @@ void turn90Degrees(int dir){
 			SysTick_Wait10ms(80);
 	}
 }
+
 
 void followWall(void){ // includes avoiding other robots
 	////get sensor values
@@ -144,8 +147,6 @@ void followWall(void){ // includes avoiding other robots
 	}
 }
 
-
-
 void followLine(void){
 	// put the values of the line sensor into the 'line' array 
         LineSensorReadArray(gls, line);
@@ -178,6 +179,60 @@ void followLine(void){
 						SetMotor(leftMotor, 0);
 						SetMotor(rightMotor, 1);
 				}				
+}
+
+
+void squareDance(void){
+	int turns = 0;
+	bool postTurn = false;
+	bool clockWise;
+	float sensor;
+	
+	rightSensor = ADCRead(adc[1])*1000;
+	leftSensor = ADCRead(adc[2])*1000;
+	if (rightSensor>leftSensor){
+		clockWise = true;
+	}else{
+		clockWise = false;
+	}
+	
+	while(turns < 4) {
+		if (clockWise) {sensor = ADCRead(adc[1])*1000;}else{sensor = ADCRead(adc[2])*1000;}
+		if (postTurn){
+			//////after we make a turn 
+			SetMotor(leftMotor, 1);
+			SetMotor(rightMotor, 1);
+			SysTick_Wait10ms(50);   // go straight for a short time to get back by object
+			do {
+				if (clockWise) {sensor = ADCRead(adc[1])*1000;}else{sensor = ADCRead(adc[2])*1000;}
+			}while(sensor > 600);
+			postTurn = false;
+		}
+		else {
+			SetMotor(leftMotor, 1);
+			SetMotor(rightMotor, 1);
+			/////keep going straight while no wall is close
+			do {
+				if (clockWise) {sensor = ADCRead(adc[1])*1000;}else{sensor = ADCRead(adc[2])*1000;}
+			}while(sensor < 600);
+			/////now that we have encountered a wall
+			/////keep going straight until we have passed the wall so we can make turn
+			do {
+				if (clockWise) {sensor = ADCRead(adc[1])*1000;}else{sensor = ADCRead(adc[2])*1000;}
+			}while(sensor > 600);
+			/////stop briefly
+			SetMotor(leftMotor, 0);
+			SetMotor(rightMotor, 0);
+			/////turn corner
+			if (clockWise) {turn90Degrees(RIGHT);} else { turn90Degrees(LEFT);}
+			turns += 1;
+			postTurn = true;
+		}
+	}
+	//////once we have made 4 turns we will stop
+	SetMotor(leftMotor, 0);
+	SetMotor(rightMotor, 0);
+	while(true);
 }
 
 void figureEight(void) {
