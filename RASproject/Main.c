@@ -48,14 +48,10 @@ int main(void) {
     // Initialization code can go here
 		initIRSensor(); 
 		initMotor();
-		//initGPIOLineSensor();
-		//SetMotor(servomotor[0], 0);
-		//SetMotor(servomotor[1], 1);	
+		initGPIOLineSensor();
 	
 		while(true){
 			followWall();
-			//SetMotor(leftMotor, -1);
-			//SetMotor(rightMotor, -1);
 		}
 }
 
@@ -156,28 +152,28 @@ void followLine(void){
 						SetMotor(rightMotor, 1);
 				}
 				else if (line[5]>0.5){
-						SetMotor(leftMotor, 1);
-						SetMotor(rightMotor, .6);
+						SetMotor(leftMotor, .9);
+						SetMotor(rightMotor, .25);
 				}
 				else if (line[2]>0.5){
-						SetMotor(leftMotor, .6);
-						SetMotor(rightMotor, 1);
+						SetMotor(leftMotor, .25);
+						SetMotor(rightMotor, .9);
 				}
 				else if (line[6]>0.5){
-						SetMotor(leftMotor, 1);
-						SetMotor(rightMotor, .2);
+						SetMotor(leftMotor, .8);
+						SetMotor(rightMotor, .1);
 				}
 				else if (line[1]>0.5){
-						SetMotor(leftMotor, .2);
-						SetMotor(rightMotor, 1);
+						SetMotor(leftMotor, .1);
+						SetMotor(rightMotor, .8);
 				}				
 				else if (line[7]>0.5){
-						SetMotor(leftMotor, 1);
+						SetMotor(leftMotor, .7);
 						SetMotor(rightMotor, 0);
 				}
 				else if (line[0]>0.5){
 						SetMotor(leftMotor, 0);
-						SetMotor(rightMotor, 1);
+						SetMotor(rightMotor, .7);
 				}				
 }
 
