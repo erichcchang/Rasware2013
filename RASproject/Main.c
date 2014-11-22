@@ -24,13 +24,16 @@ int wasRight = 0;
 
 void figureEight(void);
 void followWall(void);
+void squareDance (void);
+void followLine (void);
+void findObject (void);
 
 
 
 void initIRSensor(void) {
     adc[0] = InitializeADC(PIN_E5);
     adc[1] = InitializeADC(PIN_E4);
-	  adc[2] = InitializeADC(PIN_B4);
+	 adc[2] = InitializeADC(PIN_B4);
 }
 void initMotor(void) {
 		leftMotor = InitializeServoMotor(PIN_B6,false);			//left motor
@@ -39,7 +42,7 @@ void initMotor(void) {
 
 void initGPIOLineSensor(void) {
     // use 8 I/O pins to initialize a GPIO line sensor
-    gls = InitializeGPIOLineSensor(PIN_B5, PIN_D0, PIN_D1, PIN_D2, PIN_D3, PIN_E0, PIN_C6, PIN_C7);
+    gls = InitializeGPIOLineSensor(PIN_C7, PIN_C6, PIN_E0, PIN_D3, PIN_D2, PIN_D1, PIN_D0, PIN_B5);    //PIN_B5, PIN_D0, PIN_D1, PIN_D2, PIN_D3, PIN_E0, PIN_C6, PIN_C7
 }
 
 // The 'main' function is the entry point of the program
@@ -49,9 +52,18 @@ int main(void) {
 		initIRSensor(); 
 		initMotor();
 		initGPIOLineSensor();
-	
+		//SetMotor(rightMotor, 1); //get can
+		//SetMotor(leftMotor, 1);
+		
 		while(true){
-			followWall();
+			//followLine();
+			//followWall();
+			LineSensorReadArray(gls, line);
+			if(line[0]<0.5&&line[1]<0.5&&line[2]<0.5&&line[3]<0.5&&line[4]<0.5&&line[5]<0.5&&line[6]<0.5&&line[7]<0.5) {
+				followLine();
+			}else{
+				followWall();
+			}
 		}
 }
 
@@ -107,7 +119,7 @@ void followWall(void){ // includes avoiding other robots
 	rightSensor = ADCRead(adc[1])*1000;
 	leftSensor = ADCRead(adc[2])*1000;
 	
-	if (rightSensor>leftSensor) {			///follow whichever wall is closer
+	if (rightSensor>300 && rightSensor>leftSensor) {			///follow whichever wall is closer
 		//////if right wall is closer
 		if(frontSensor > 900){					////back up and turn if wall ahead
 			SetMotor(leftMotor, -1);
@@ -125,14 +137,14 @@ void followWall(void){ // includes avoiding other robots
 		}
 	}
 	/////////if left wall is closer
-	else {												
+	else if(leftSensor>300 && leftSensor>rightSensor){												
 		if(frontSensor > 900){					////back up and turn if wall ahead
 			SetMotor(leftMotor, -1);
 			SetMotor(rightMotor, -1);
 			SysTick_Wait10ms(70);			//reverse
 			turn90Degrees(RIGHT);
 		}
-		else if(leftSensor > 650){
+		else if(leftSensor > 800){
 			SetMotor(leftMotor, .8);
 			SetMotor(rightMotor, -.25);
 		}
@@ -140,6 +152,10 @@ void followWall(void){ // includes avoiding other robots
 			SetMotor(leftMotor, .25);
 			SetMotor(rightMotor, 1);
 		}
+	}
+	else {
+		SetMotor(leftMotor, 0);
+		SetMotor(rightMotor, 0);
 	}
 }
 
@@ -152,35 +168,35 @@ void followLine(void){
 						SetMotor(rightMotor, 1);
 				}
 				else if (line[5]>0.5){
-						SetMotor(leftMotor, .9);
+						SetMotor(leftMotor, .8);
 						SetMotor(rightMotor, .25);
 				}
 				else if (line[2]>0.5){
-						SetMotor(leftMotor, .25);
-						SetMotor(rightMotor, .9);
+						SetMotor(leftMotor, .15);
+						SetMotor(rightMotor, .8);
 				}
 				else if (line[6]>0.5){
-						SetMotor(leftMotor, .8);
-						SetMotor(rightMotor, .1);
+						SetMotor(leftMotor, .6);
+						SetMotor(rightMotor, -.1);
 				}
 				else if (line[1]>0.5){
-						SetMotor(leftMotor, .1);
-						SetMotor(rightMotor, .8);
+						SetMotor(leftMotor, -.1);
+						SetMotor(rightMotor, .6);
 				}				
 				else if (line[7]>0.5){
-						SetMotor(leftMotor, .7);
-						SetMotor(rightMotor, 0);
+						SetMotor(leftMotor, .5);
+						SetMotor(rightMotor, -.2);
 				}
 				else if (line[0]>0.5){
-						SetMotor(leftMotor, 0);
-						SetMotor(rightMotor, .7);
+						SetMotor(leftMotor, -.2);
+						SetMotor(rightMotor, .5);
 				}				
 }
 
 
 void squareDance(void){
 	int turns = 0;
-	bool postTurn = false;
+	bool postTurn = true;
 	bool clockWise;
 	float sensor;
 	
@@ -198,10 +214,10 @@ void squareDance(void){
 			//////after we make a turn 
 			SetMotor(leftMotor, 1);
 			SetMotor(rightMotor, 1);
-			SysTick_Wait10ms(50);   // go straight for a short time to get back by object
+			SysTick_Wait10ms(250);   // go straight for a short time to get back by object
 			do {
 				if (clockWise) {sensor = ADCRead(adc[1])*1000;}else{sensor = ADCRead(adc[2])*1000;}
-			}while(sensor > 600);
+			}while(sensor > 400);
 			postTurn = false;
 		}
 		else {
@@ -210,15 +226,17 @@ void squareDance(void){
 			/////keep going straight while no wall is close
 			do {
 				if (clockWise) {sensor = ADCRead(adc[1])*1000;}else{sensor = ADCRead(adc[2])*1000;}
-			}while(sensor < 600);
+			}while(sensor < 400);
 			/////now that we have encountered a wall
 			/////keep going straight until we have passed the wall so we can make turn
 			do {
 				if (clockWise) {sensor = ADCRead(adc[1])*1000;}else{sensor = ADCRead(adc[2])*1000;}
-			}while(sensor > 600);
+			}while(sensor > 400);
+			SysTick_Wait10ms(70);
 			/////stop briefly
 			SetMotor(leftMotor, 0);
 			SetMotor(rightMotor, 0);
+			SysTick_Wait10ms(40);
 			/////turn corner
 			if (clockWise) {turn90Degrees(RIGHT);} else { turn90Degrees(LEFT);}
 			turns += 1;

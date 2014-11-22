@@ -27,11 +27,12 @@ void IRSensorDemo(void) {
     // loop as long as the user doesn't press a key 
     while (!KeyWasPressed()) {
         Printf(
-            "IR values:  %1.3f  %1.3f  %1.3f  %1.3f\r",
+            "IR values:  front: %1.3f  right: %1.3f  left: %1.3f \r",
             ADCRead(adc[0]),
+		 
             ADCRead(adc[1]),
-            ADCRead(adc[2]),
-            ADCRead(adc[3])
+            ADCRead(adc[2])
+            //ADCRead(adc[3])
             );
     }
   
