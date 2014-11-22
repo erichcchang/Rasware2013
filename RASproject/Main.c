@@ -21,6 +21,7 @@ float rightSensor;
 float line[8];
 int wasLeft = 0;
 int wasRight = 0;
+bool past90 = false;
 
 void figureEight(void);
 void followWall(void);
@@ -59,10 +60,16 @@ int main(void) {
 			//followLine();
 			//followWall();
 			LineSensorReadArray(gls, line);
-			if(line[0]<0.5&&line[1]<0.5&&line[2]<0.5&&line[3]<0.5&&line[4]<0.5&&line[5]<0.5&&line[6]<0.5&&line[7]<0.5) {
-				followWall();
-			}else{
-				followLine();
+			if (!past90){
+				if(line[0]<0.5&&line[1]<0.5&&line[2]<0.5&&line[3]<0.5&&line[4]<0.5&&line[5]<0.5&&line[6]<0.5&&line[7]<0.5) {
+					followWall();
+				}else{
+					followLine();
+				}
+			}
+			else {
+				
+				
 			}
 		}
 }
@@ -110,6 +117,7 @@ void turn90Degrees(int dir){
 			SetMotor(rightMotor, -1);
 			SysTick_Wait10ms(80);
 	}
+	past90 = true;
 }
 
 
@@ -182,27 +190,27 @@ void followLine(void){
 				}
 				else if (line[5]>0.5&&line[4]>0.5){
 						SetMotor(leftMotor, 1);
-						SetMotor(rightMotor, .4);
+						SetMotor(rightMotor, .8);
 				}
 				else if (line[2]>0.5&&line[3]>0.5){
-						SetMotor(leftMotor, .4);
+						SetMotor(leftMotor, .8);
 						SetMotor(rightMotor, 1);
 				}
 				else if (line[7]>0.5&&line[6]>0.5){
 						SetMotor(leftMotor, .3);
-						SetMotor(rightMotor, -.4);
+						SetMotor(rightMotor, -.25);
 				}
 				else if (line[0]>0.5&&line[1]>0.5){
-						SetMotor(leftMotor, -.4);
+						SetMotor(leftMotor, -.25);
 						SetMotor(rightMotor, .3);
 				}
 				else if (line[6]>0.5&&line[5]>0.5){
-						SetMotor(leftMotor, .5);
-						SetMotor(rightMotor, .1);
+						SetMotor(leftMotor, .6);
+						SetMotor(rightMotor, .3);
 				}
 				else if (line[1]>0.5&&line[2]>0.5){
-						SetMotor(leftMotor, .1);
-						SetMotor(rightMotor, .5);
+						SetMotor(leftMotor, .6);
+						SetMotor(rightMotor, .3);
 				}	
 				SetPin(PIN_F2, 0);
 				SetPin(PIN_F2, 0);
