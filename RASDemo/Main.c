@@ -14,7 +14,8 @@ void blink(void) {
 }
 
 int main(void) {  
-    char ch;
+
+	char ch;
 
     CallEvery(blink, 0, 0.25f);
 

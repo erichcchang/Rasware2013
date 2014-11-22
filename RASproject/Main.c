@@ -60,9 +60,9 @@ int main(void) {
 			//followWall();
 			LineSensorReadArray(gls, line);
 			if(line[0]<0.5&&line[1]<0.5&&line[2]<0.5&&line[3]<0.5&&line[4]<0.5&&line[5]<0.5&&line[6]<0.5&&line[7]<0.5) {
-				followLine();
-			}else{
 				followWall();
+			}else{
+				followLine();
 			}
 		}
 }
@@ -115,6 +115,8 @@ void turn90Degrees(int dir){
 
 void followWall(void){ // includes avoiding other robots
 	////get sensor values
+	bool wasLeftWall = false;
+	bool wasRightWall = false;
 	frontSensor = ADCRead(adc[0])*1000;
 	rightSensor = ADCRead(adc[1])*1000;
 	leftSensor = ADCRead(adc[2])*1000;
@@ -126,8 +128,10 @@ void followWall(void){ // includes avoiding other robots
 			SetMotor(rightMotor, -1);
 			SysTick_Wait10ms(70);			//reverse for 3 seconds
 			turn90Degrees(LEFT);
+			wasRightWall = true;
+			wasLeftWall = false;
 		}
-		else if(rightSensor > 800){
+		else if(rightSensor > 700){
 			SetMotor(leftMotor, -.25);
 			SetMotor(rightMotor, .8);
 		}
@@ -143,8 +147,10 @@ void followWall(void){ // includes avoiding other robots
 			SetMotor(rightMotor, -1);
 			SysTick_Wait10ms(70);			//reverse
 			turn90Degrees(RIGHT);
+			wasLeftWall = true;
+			wasRightWall = false;
 		}
-		else if(leftSensor > 800){
+		else if(leftSensor > 700){
 			SetMotor(leftMotor, .8);
 			SetMotor(rightMotor, -.25);
 		}
@@ -154,43 +160,57 @@ void followWall(void){ // includes avoiding other robots
 		}
 	}
 	else {
-		SetMotor(leftMotor, 0);
-		SetMotor(rightMotor, 0);
+		if (wasLeftWall) {
+			SetMotor(leftMotor, 1);
+			SetMotor(rightMotor, .7);
+		}
+		else {
+			SetMotor(leftMotor, .7);
+			SetMotor(rightMotor, 1);
+		}
 	}
 }
 
 void followLine(void){
 	// put the values of the line sensor into the 'line' array 
+			SetPin(PIN_F2, 1);
+			SetPin(PIN_F2, 1);
         LineSensorReadArray(gls, line);
-				
-				if((line[3]>0.5)||(line[4]>0.5)){
+				if((line[3]>0.5)&&(line[4]>0.5)){
 						SetMotor(leftMotor, 1);
 						SetMotor(rightMotor, 1);
 				}
-				else if (line[5]>0.5){
-						SetMotor(leftMotor, .8);
-						SetMotor(rightMotor, .25);
+				else if (line[5]>0.5&&line[4]>0.5){
+						SetMotor(leftMotor, 1);
+						SetMotor(rightMotor, .4);
 				}
-				else if (line[2]>0.5){
-						SetMotor(leftMotor, .15);
-						SetMotor(rightMotor, .8);
+				else if (line[2]>0.5&&line[3]>0.5){
+						SetMotor(leftMotor, .4);
+						SetMotor(rightMotor, 1);
 				}
-				else if (line[6]>0.5){
-						SetMotor(leftMotor, .6);
-						SetMotor(rightMotor, -.1);
+				else if (line[7]>0.5&&line[6]>0.5){
+						SetMotor(leftMotor, .3);
+						SetMotor(rightMotor, -.4);
 				}
-				else if (line[1]>0.5){
-						SetMotor(leftMotor, -.1);
-						SetMotor(rightMotor, .6);
-				}				
-				else if (line[7]>0.5){
+				else if (line[0]>0.5&&line[1]>0.5){
+						SetMotor(leftMotor, -.4);
+						SetMotor(rightMotor, .3);
+				}
+				else if (line[6]>0.5&&line[5]>0.5){
 						SetMotor(leftMotor, .5);
-						SetMotor(rightMotor, -.2);
+						SetMotor(rightMotor, .1);
 				}
-				else if (line[0]>0.5){
-						SetMotor(leftMotor, -.2);
+				else if (line[1]>0.5&&line[2]>0.5){
+						SetMotor(leftMotor, .1);
 						SetMotor(rightMotor, .5);
-				}				
+				}	
+				SetPin(PIN_F2, 0);
+				SetPin(PIN_F2, 0);
+
+				
+				
+							
+								
 }
 
 
