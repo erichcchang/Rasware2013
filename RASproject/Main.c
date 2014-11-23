@@ -5,7 +5,6 @@
 #include <RASLib/inc/motor.h>
 #include <RasLib/inc/linesensor.h>
 #include "SysTick.h"
-#include "PLL.h"
 #include <stdbool.h>
 
 #define LEFT 1
@@ -23,6 +22,8 @@ float line[8];
 int wasLeft = 0;
 int wasRight = 0;
 int stage = 0;
+bool wasLeftWall = false;
+bool wasRightWall = false;
 
 
 void DisableInterrupts(void);
@@ -35,6 +36,7 @@ void findObject (void);
 bool linePresent (void);
 bool wallPresent (void);
 void lookForLine(void);
+void lineCheck(void);
 
 
 
@@ -53,14 +55,20 @@ void initGPIOLineSensor(void) {
     gls = InitializeGPIOLineSensor(PIN_C7, PIN_C6, PIN_E0, PIN_D3, PIN_D2, PIN_D1, PIN_D0, PIN_B5);    
 }
 
+
+tBoolean led_on;
+
+
+
+
 int main(void) {
-	PLL_Init();       	// bus clock at 80 MHz
-	SysTick_Init(80000);        // initialize SysTick timer with interrupts every 1ms
+
 	initIRSensor(); 
 	initMotor();
 	initGPIOLineSensor();
+	CallEvery(lineCheck, 0, .05f);
 	
-	while(true){
+	while(false){
 		//LineSensorReadArray(gls, line);
 		switch (stage) {
 			case 0:				//start state
@@ -68,22 +76,52 @@ int main(void) {
 				else {followWall();}
 				break;
 			case 1:				//once 90degree turn passed
-				if (wallPresent()) {followWall();}
-				else {lookForLine();}
+				if (wallPresent()){followWall();}
+				else if (linePresent()){followLine();}
+				else {
+					if (wasLeftWall) {
+						SetMotor(leftMotor, 1);
+						SetMotor(rightMotor, .7);
+					}else {
+						SetMotor(leftMotor, .7);
+						SetMotor(rightMotor, 1);
+					}
+				}
 				break;
 			case 2:				//once line found again after walled section
+				followLine();
 				break;
 			case 3:				//end of course look for flag
+				SetMotor(leftMotor, .1);
+				SetMotor(rightMotor, -.1);
 				break;
 		}
 	}
 }
 
-
-//void SysTickHandler(void){
-//	SetPin(PIN_F2, 1);
-//}
-
+void lineCheck(void) {
+	static int lineCount = 0;
+	static int offLineCount = 0;
+   if(stage == 1){
+		 if (linePresent()){
+			 lineCount+=1;
+		 }else{
+			 lineCount = 0;
+		 }
+		 if(lineCount == 5){
+			 stage = 2;
+		 }
+	}else if (stage == 2){
+		if (!linePresent()){
+			offLineCount+=1;
+		}else{
+			lineCount = 0;
+		}
+		if(offLineCount == 5){
+			stage = 3;
+		}
+	}	 
+ }
 bool wallPresent(void){
 	rightSensor = ADCRead(adc[1])*1000;
 	leftSensor = ADCRead(adc[2])*1000;
@@ -155,8 +193,6 @@ void turn90Degrees(int dir){
 
 void followWall(void){ // includes avoiding other robots
 	////get sensor values
-	bool wasLeftWall = false;
-	bool wasRightWall = false;
 	frontSensor = ADCRead(adc[0])*1000;
 	rightSensor = ADCRead(adc[1])*1000;
 	leftSensor = ADCRead(adc[2])*1000;
@@ -213,7 +249,7 @@ void followWall(void){ // includes avoiding other robots
 
 void followLine(void){
 	// put the values of the line sensor into the 'line' array 
-			SetPin(PIN_F2, 1);
+		SetPin(PIN_F2, 1);
         LineSensorReadArray(gls, line);
 				if((line[3]>0.5)&&(line[4]>0.5)){
 						SetMotor(leftMotor, 1);
