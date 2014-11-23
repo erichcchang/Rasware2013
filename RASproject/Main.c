@@ -67,8 +67,8 @@ int main(void) {
 	initMotor();
 	initGPIOLineSensor();
 	CallEvery(lineCheck, 0, .05f);
-	
-	while(false){
+	stage = 0;
+	while(true){
 		//LineSensorReadArray(gls, line);
 		switch (stage) {
 			case 0:				//start state
@@ -76,7 +76,7 @@ int main(void) {
 				else {followWall();}
 				break;
 			case 1:				//once 90degree turn passed
-				if (wallPresent()){followWall();}
+				if (wallPresent()) {followWall();}
 				else if (linePresent()){followLine();}
 				else {
 					if (wasLeftWall) {
