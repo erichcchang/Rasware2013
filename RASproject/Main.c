@@ -5,6 +5,7 @@
 #include <RASLib/inc/motor.h>
 #include <RasLib/inc/linesensor.h>
 #include "SysTick.h"
+#include "PLL.h"
 #include <stdbool.h>
 
 #define LEFT 1
@@ -21,13 +22,17 @@ float rightSensor;
 float line[8];
 int wasLeft = 0;
 int wasRight = 0;
-bool past90 = false;
+int stage = 0;
 
+
+void DisableInterrupts(void);
+void EnableInterrupts(void);
 void figureEight(void);
 void followWall(void);
 void squareDance (void);
 void followLine (void);
 void findObject (void);
+bool linePresent (void);
 
 
 
@@ -43,35 +48,47 @@ void initMotor(void) {
 
 void initGPIOLineSensor(void) {
     // use 8 I/O pins to initialize a GPIO line sensor
-    gls = InitializeGPIOLineSensor(PIN_C7, PIN_C6, PIN_E0, PIN_D3, PIN_D2, PIN_D1, PIN_D0, PIN_B5);    //PIN_B5, PIN_D0, PIN_D1, PIN_D2, PIN_D3, PIN_E0, PIN_C6, PIN_C7
+    gls = InitializeGPIOLineSensor(PIN_C7, PIN_C6, PIN_E0, PIN_D3, PIN_D2, PIN_D1, PIN_D0, PIN_B5);    
 }
 
-// The 'main' function is the entry point of the program
 int main(void) {
-		
-    // Initialization code can go here
-		initIRSensor(); 
-		initMotor();
-		initGPIOLineSensor();
-		//SetMotor(rightMotor, 1); //get can
-		//SetMotor(leftMotor, 1);
-		
-		while(true){
-			//followLine();
-			//followWall();
-			LineSensorReadArray(gls, line);
-			if (!past90){
-				if(line[0]<0.5&&line[1]<0.5&&line[2]<0.5&&line[3]<0.5&&line[4]<0.5&&line[5]<0.5&&line[6]<0.5&&line[7]<0.5) {
-					followWall();
-				}else{
-					followLine();
-				}
-			}
-			else {
-				
-				
-			}
+	PLL_Init();       	// bus clock at 80 MHz
+	SysTick_Init(80000);        // initialize SysTick timer with interrupts every 1ms
+	initIRSensor(); 
+	initMotor();
+	initGPIOLineSensor();
+	
+	while(true){
+		//LineSensorReadArray(gls, line);
+		switch (stage) {
+			case 0:				//start state
+				if (linePresent()) {followLine();}
+				else {followWall();}
+				break;
+			case 1:				//once 90degree turn passed
+				break;
+			case 2:				//once line found again after walled section
+				break;
+			case 3:				//end of course look for flag
+				break;
 		}
+	}
+}
+
+
+void SysTick_Handler(void){
+
+}
+
+bool linePresent(void){
+	int i = 0;
+	int count = 0;
+	LineSensorReadArray(gls, line);
+	for (i = 0; i<8; i+=1){
+		if(line[i]>0.5){count += 1;}
+	}
+	if(count>1&&count<4) {return true;}
+	else {return false;}
 }
 
 void findObject(void) {
@@ -117,7 +134,7 @@ void turn90Degrees(int dir){
 			SetMotor(rightMotor, -1);
 			SysTick_Wait10ms(80);
 	}
-	past90 = true;
+	stage = 1;
 }
 
 
@@ -182,7 +199,6 @@ void followWall(void){ // includes avoiding other robots
 void followLine(void){
 	// put the values of the line sensor into the 'line' array 
 			SetPin(PIN_F2, 1);
-			SetPin(PIN_F2, 1);
         LineSensorReadArray(gls, line);
 				if((line[3]>0.5)&&(line[4]>0.5)){
 						SetMotor(leftMotor, 1);
@@ -196,14 +212,6 @@ void followLine(void){
 						SetMotor(leftMotor, .8);
 						SetMotor(rightMotor, 1);
 				}
-				else if (line[7]>0.5&&line[6]>0.5){
-						SetMotor(leftMotor, .3);
-						SetMotor(rightMotor, -.25);
-				}
-				else if (line[0]>0.5&&line[1]>0.5){
-						SetMotor(leftMotor, -.25);
-						SetMotor(rightMotor, .3);
-				}
 				else if (line[6]>0.5&&line[5]>0.5){
 						SetMotor(leftMotor, .6);
 						SetMotor(rightMotor, .3);
@@ -212,13 +220,15 @@ void followLine(void){
 						SetMotor(leftMotor, .6);
 						SetMotor(rightMotor, .3);
 				}	
+				else if (line[7]>0.5&&line[6]>0.5){
+						SetMotor(leftMotor, .3);
+						SetMotor(rightMotor, -.25);
+				}
+				else if (line[0]>0.5&&line[1]>0.5){
+						SetMotor(leftMotor, -.25);
+						SetMotor(rightMotor, .3);
+				}
 				SetPin(PIN_F2, 0);
-				SetPin(PIN_F2, 0);
-
-				
-				
-							
-								
 }
 
 
