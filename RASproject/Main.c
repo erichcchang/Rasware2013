@@ -76,17 +76,17 @@ int main(void) {
 				else {followWall();}
 				break;
 			case 1:				//once 90degree turn passed
-				if (wallPresent()) {followWall();}
-				else if (linePresent()){followLine();}
-				else {
-					if (wasLeftWall) {
-						SetMotor(leftMotor, 1);
-						SetMotor(rightMotor, .7);
-					}else {
-						SetMotor(leftMotor, .7);
-						SetMotor(rightMotor, 1);
-					}
-				}
+//				SetMotor(leftMotor, 1);
+//				SetMotor(rightMotor, -1);
+				
+				SetPin(PIN_F2, 1);
+				followWall();
+//				if (wallPresent()) {followWall();}
+//				else {
+//					if (linePresent()) {followLine();}
+//					else {stage = 3;}
+//				}
+				SetPin(PIN_F2, 0);
 				break;
 			case 2:				//once line found again after walled section
 				followLine();
@@ -187,6 +187,7 @@ void turn90Degrees(int dir){
 			SetMotor(rightMotor, -1);
 			SysTick_Wait10ms(80);
 	}
+	
 	stage = 1;
 }
 
@@ -249,7 +250,6 @@ void followWall(void){ // includes avoiding other robots
 
 void followLine(void){
 	// put the values of the line sensor into the 'line' array 
-		SetPin(PIN_F2, 1);
         LineSensorReadArray(gls, line);
 				if((line[3]>0.5)&&(line[4]>0.5)){
 						SetMotor(leftMotor, 1);
@@ -279,7 +279,6 @@ void followLine(void){
 						SetMotor(leftMotor, -.25);
 						SetMotor(rightMotor, .3);
 				}
-				SetPin(PIN_F2, 0);
 }
 
 
