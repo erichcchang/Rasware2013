@@ -14,4 +14,4 @@ void SysTick_Wait10ms(uint32_t delay);
 
 
 // Interrupt handler
-void SysTick_Handler(void);
+//void SysTick_Handler(void);

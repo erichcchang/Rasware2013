@@ -33,6 +33,8 @@ void squareDance (void);
 void followLine (void);
 void findObject (void);
 bool linePresent (void);
+bool wallPresent (void);
+void lookForLine(void);
 
 
 
@@ -66,6 +68,8 @@ int main(void) {
 				else {followWall();}
 				break;
 			case 1:				//once 90degree turn passed
+				if (wallPresent()) {followWall();}
+				else {lookForLine();}
 				break;
 			case 2:				//once line found again after walled section
 				break;
@@ -76,8 +80,19 @@ int main(void) {
 }
 
 
-void SysTick_Handler(void){
+//void SysTickHandler(void){
+//	SetPin(PIN_F2, 1);
+//}
 
+bool wallPresent(void){
+	rightSensor = ADCRead(adc[1])*1000;
+	leftSensor = ADCRead(adc[2])*1000;
+	if (rightSensor>300||leftSensor>300){
+		return true;
+	}
+	else {
+		return false;
+	}
 }
 
 bool linePresent(void){
@@ -232,6 +247,9 @@ void followLine(void){
 }
 
 
+void lookForLine(void){
+	
+}
 void squareDance(void){
 	int turns = 0;
 	bool postTurn = true;
