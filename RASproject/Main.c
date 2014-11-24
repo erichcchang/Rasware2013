@@ -153,7 +153,6 @@ bool mostDark(void){
 }
 
 void findObject(void) {
-      // Runtime code can go here
 	int item = 0;
 	int close =0;
 	if (wasLeftWall){
@@ -215,7 +214,6 @@ void findObject(void) {
 	SysTick_Wait10ms(125);
 	SetMotor(rightMotor, 0); //STOP 
 	SetMotor(leftMotor, 0);
-	SetPin(PIN_F3, 1);
 	//SetServo(servo,0);
 	SysTick_Wait10ms(1000);	
 
@@ -370,7 +368,7 @@ void findEnd(void){
 	}else{
 		 endFound = 0;
 	}
-	if(endFound == 45){
+	if(endFound == 50){
 		bitchin+=1;
 		endFound = 0;
 	}
