@@ -76,7 +76,7 @@ int main(void) {
 	initMotor();
 	initGPIOLineSensor();
 	//initServo();
-	//SetServo(servo,0.1);
+	//SetServo(servo,0);
 	stage = 0;
 	//while(1){followLine();}
 	//while(1){followWall();}
@@ -156,7 +156,7 @@ void findObject(void) {
       // Runtime code can go here
 	int item = 0;
 	int close =0;
-	if (wasLeft){
+	if (wasLeftWall){
 		SetMotor(rightMotor, -.1); //rotate
 		SetMotor(leftMotor, .1);
 	}else{
@@ -170,14 +170,14 @@ void findObject(void) {
 		}
 	}
 	
-	//SetServo(servo,.75);
+	//SetServo(servo,1);
 	SetMotor(leftMotor, 0);
 	SetMotor(rightMotor, 0);
 	SysTick_Wait10ms(40);
 	
 	SetMotor(leftMotor, 1);
 	SetMotor(rightMotor, 1);
-	SysTick_Wait10ms(100);
+	//SysTick_Wait10ms(100);
 //	while (close == 0) {
 //		frontSensor = ADCRead(adc[0])*1000;
 //		if (frontSensor<300) {
@@ -212,12 +212,12 @@ void findObject(void) {
 //	else if (frontSensor<1000){
 //		SysTick_Wait10ms(50);
 //	}
-//	
-//	SetMotor(rightMotor, 0); //STOP 
-//	SetMotor(leftMotor, 0);
-//	SetPin(PIN_F3, 1);
-//	//SetServo(servo,0.1);
-//	SysTick_Wait10ms(1000);	
+	SysTick_Wait10ms(125);
+	SetMotor(rightMotor, 0); //STOP 
+	SetMotor(leftMotor, 0);
+	SetPin(PIN_F3, 1);
+	//SetServo(servo,0);
+	SysTick_Wait10ms(1000);	
 
 
 
@@ -370,11 +370,11 @@ void findEnd(void){
 	}else{
 		 endFound = 0;
 	}
-	if(endFound == 60){
+	if(endFound == 45){
 		bitchin+=1;
 		endFound = 0;
 	}
-	if (bitchin==7){
+	if (bitchin==6){
 		stage = 3;
 	}
 	SetPin(PIN_F1, 1);
