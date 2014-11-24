@@ -4,8 +4,10 @@
 #include <RASLib/inc/adc.h>
 #include <RASLib/inc/motor.h>
 #include <RasLib/inc/linesensor.h>
+#include <RasLib/inc/servo.h>
 #include "SysTick.h"
 #include <stdbool.h>
+#include <stdlib.h>
 
 #define LEFT 1
 #define RIGHT -1
@@ -14,6 +16,7 @@ tADC *adc[3];
 //tMotor *servomotor[2];
 tMotor *rightMotor;
 tMotor *leftMotor;
+static tServo *servo;
 static tLineSensor *gls;
 float frontSensor;
 float leftSensor;
@@ -38,6 +41,7 @@ bool wallPresent (void);
 void findLine(void);
 void lineCheck(void);
 void findEnd(void);
+bool mostDark(void);
 
 
 
@@ -56,8 +60,12 @@ void initGPIOLineSensor(void) {
     gls = InitializeGPIOLineSensor(PIN_C7, PIN_C6, PIN_E0, PIN_D3, PIN_D2, PIN_D1, PIN_D0, PIN_B5);    
 }
 
+void initServo(void) {
+   servo = InitializeServo(PIN_B0);
+}
 
-tBoolean led_on;
+
+
 
 
 
@@ -67,7 +75,8 @@ int main(void) {
 	initIRSensor(); 
 	initMotor();
 	initGPIOLineSensor();
-	//CallEvery(lineCheck, 0, .05f);
+	//initServo();
+	//SetServo(servo,0.1);
 	stage = 0;
 	//while(1){followLine();}
 	//while(1){followWall();}
@@ -95,43 +104,21 @@ int main(void) {
 		}else if (stage==2){
 			//once line found again after walled section
 			SetPin(PIN_F1, 1);
-			if(line[0]<0.5&&line[1]<0.5&&line[2]<0.5&&line[3]<0.5&&line[4]<0.5&&line[5]<0.5&&line[6]<0.5&&line[7]<0.5) {
+			if((line[0]<0.5&&line[1]<0.5&&line[2]<0.5&&line[3]<0.5&&line[4]<0.5&&line[5]<0.5&&line[6]<0.5&&line[7]<0.5)||
+				(mostDark())) {			//line[0]>0.5&&line[1]>0.5&&line[2]>0.5&&line[3]>0.5&&line[4]>0.5&&line[5]>0.5&&line[6]>0.5&&line[7]>0.5)
 				findEnd();
 			}else{
 				followLine();
 			};
 			SetPin(PIN_F1, 0);
 		}else{//end of course look for flag
-			SetMotor(leftMotor, .1);
-			SetMotor(rightMotor, -.1);
-			while(true);
+			findObject();
+			break;
 		}
 	}
 }
 
-void lineCheck(void) {
-	static int lineCount = 0;
-	static int offLineCount = 0;
-   if(stage == 1){
-		 if (linePresent()){
-			 lineCount+=1;
-		 }else{
-			 lineCount = 0;
-		 }
-		 if(lineCount == 5){
-			 stage = 2;
-		 }
-	}else if (stage == 2){
-		if (!linePresent()){
-			offLineCount+=1;
-		}else{
-			lineCount = 0;
-		}
-		if(offLineCount == 5){
-			stage = 3;
-		}
-	}	 
- }
+
 bool wallPresent(void){
 	rightSensor = ADCRead(adc[1])*1000;
 	leftSensor = ADCRead(adc[2])*1000;
@@ -154,34 +141,86 @@ bool linePresent(void){
 	else {return false;}
 }
 
+bool mostDark(void){
+	int i = 0;
+	int count = 0;
+	LineSensorReadArray(gls, line);
+	for (i = 0; i<8; i+=1){
+		if(line[i]>0.5){count += 1;}
+	}
+	if(count>4&&count<9) {return true;}
+	else {return false;}
+}
+
 void findObject(void) {
       // Runtime code can go here
-			int item = 0;
-      frontSensor = ADCRead(adc[0])*1000;
-			while (item == 0) {	
-				frontSensor = ADCRead(adc[0])*1000;
-				if (frontSensor < 200) {
-					SetMotor(rightMotor, -.1); //rotate
-					SetMotor(leftMotor, .1);
-				}else{
-					item = 1;
-				}
-			}
-			
-			SetMotor(rightMotor, 1); //get can
-			SetMotor(leftMotor, 1);
-			frontSensor = ADCRead(adc[0])*1000;
-			rightSensor = ADCRead(adc[1])*1000;
-			leftSensor = ADCRead(adc[2])*1000;
+	int item = 0;
+	int close =0;
+	if (wasLeft){
+		SetMotor(rightMotor, -.1); //rotate
+		SetMotor(leftMotor, .1);
+	}else{
+		SetMotor(rightMotor, .1); //rotate
+		SetMotor(leftMotor, -.1);
+	}  
+	while (item == 0) {	
+		frontSensor = ADCRead(adc[0])*1000;
+		if (frontSensor > 300) {
+			item = 1;
+		}
+	}
+	
+	//SetServo(servo,.75);
+	SetMotor(leftMotor, 0);
+	SetMotor(rightMotor, 0);
+	SysTick_Wait10ms(40);
+	
+	SetMotor(leftMotor, 1);
+	SetMotor(rightMotor, 1);
+	SysTick_Wait10ms(100);
+//	while (close == 0) {
+//		frontSensor = ADCRead(adc[0])*1000;
+//		if (frontSensor<300) {
+//			SetMotor(rightMotor, -1);
+//			SetMotor(leftMotor, 0);
+//			SysTick_Wait10ms(50);
+//			frontSensor = ADCRead(adc[0])*1000;
+//			SetMotor(rightMotor, 0.1);
+//			while(frontSensor<300){
+//				frontSensor = ADCRead(adc[0])*1000;
+//			}
+//		}
+//		else if(frontSensor>300&&frontSensor<850) {
+//			SetMotor(rightMotor, 1);
+//			SetMotor(leftMotor, 1);		
+//		}
+//		else if(frontSensor>850) {
+//			close = 1;
+//		}
+//	}
+	
+	
+//	if (frontSensor<400){
+//		SysTick_Wait10ms(200);
+//	}
+//	else if (frontSensor<600){
+//		SysTick_Wait10ms(150);
+//	}
+//	else if (frontSensor<800){
+//		SysTick_Wait10ms(100);
+//	}
+//	else if (frontSensor<1000){
+//		SysTick_Wait10ms(50);
+//	}
+//	
+//	SetMotor(rightMotor, 0); //STOP 
+//	SetMotor(leftMotor, 0);
+//	SetPin(PIN_F3, 1);
+//	//SetServo(servo,0.1);
+//	SysTick_Wait10ms(1000);	
 
-			while (frontSensor < 850 && leftSensor < 850 && rightSensor < 850){
-					frontSensor = ADCRead(adc[0])*1000;
-					rightSensor = ADCRead(adc[1])*1000;
-					leftSensor = ADCRead(adc[2])*1000;
-			}
-					SetMotor(rightMotor, 0); //STOP 
-					SetMotor(leftMotor, 0);
-			while(1);
+
+
 }
 
 
@@ -316,6 +355,8 @@ void findLine(void){
 void findEnd(void){
 	static int endFound = 0;
 	static int bitchin = 0;
+	SetPin(PIN_F1, 0);
+	SetPin(PIN_F3, 1);
 	if (wasLeftWall) {
 			SetMotor(leftMotor, .5);
 			SetMotor(rightMotor, .2);
@@ -324,18 +365,20 @@ void findEnd(void){
 		SetMotor(leftMotor, .2);
 		SetMotor(rightMotor, .5);
 	}
-	if (!linePresent()){
+	if (!linePresent()||mostDark()){
 		 endFound+=1;
 	}else{
 		 endFound = 0;
 	}
-	if(endFound == 50){
+	if(endFound == 60){
 		bitchin+=1;
 		endFound = 0;
 	}
-	if (bitchin==4){
+	if (bitchin==7){
 		stage = 3;
 	}
+	SetPin(PIN_F1, 1);
+	SetPin(PIN_F3, 0);
 }
 
 void squareDance(void){
