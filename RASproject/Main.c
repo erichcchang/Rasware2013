@@ -35,8 +35,9 @@ void followLine (void);
 void findObject (void);
 bool linePresent (void);
 bool wallPresent (void);
-void lookForLine(void);
+void findLine(void);
 void lineCheck(void);
+void findEnd(void);
 
 
 
@@ -46,8 +47,8 @@ void initIRSensor(void) {
 	 adc[2] = InitializeADC(PIN_B4);
 }
 void initMotor(void) {
-		leftMotor = InitializeServoMotor(PIN_B6,false);			//left motor
-		rightMotor = InitializeServoMotor(PIN_B7,true);			//right motor
+		leftMotor = InitializeServoMotor(PIN_C4,false);			//left motor
+		rightMotor = InitializeServoMotor(PIN_C5,true);			//right motor
 }
 
 void initGPIOLineSensor(void) {
@@ -66,35 +67,44 @@ int main(void) {
 	initIRSensor(); 
 	initMotor();
 	initGPIOLineSensor();
-	CallEvery(lineCheck, 0, .05f);
+	//CallEvery(lineCheck, 0, .05f);
 	stage = 0;
+	//while(1){followLine();}
+	//while(1){followWall();}
+	//SetMotor(leftMotor, 1); SetMotor(rightMotor, 1);
 	while(true){
-		//LineSensorReadArray(gls, line);
-		switch (stage) {
-			case 0:				//start state
-				if (linePresent()) {followLine();}
-				else {followWall();}
-				break;
-			case 1:				//once 90degree turn passed
+		LineSensorReadArray(gls, line);
+		if (stage==0){			//start state
+				if(line[0]<0.5&&line[1]<0.5&&line[2]<0.5&&line[3]<0.5&&line[4]<0.5&&line[5]<0.5&&line[6]<0.5&&line[7]<0.5) {
+					followWall();
+				}else{
+					followLine();
+				}
+		}else if(stage==1){
+			//once 90degree turn passed
 //				SetMotor(leftMotor, 1);
 //				SetMotor(rightMotor, -1);
 				
 				SetPin(PIN_F2, 1);
 				followWall();
-//				if (wallPresent()) {followWall();}
-//				else {
-//					if (linePresent()) {followLine();}
-//					else {stage = 3;}
-//				}
+				if (wallPresent()) {followWall();}
+				else {
+					findLine();
+				}
 				SetPin(PIN_F2, 0);
-				break;
-			case 2:				//once line found again after walled section
+		}else if (stage==2){
+			//once line found again after walled section
+			SetPin(PIN_F1, 1);
+			if(line[0]<0.5&&line[1]<0.5&&line[2]<0.5&&line[3]<0.5&&line[4]<0.5&&line[5]<0.5&&line[6]<0.5&&line[7]<0.5) {
+				findEnd();
+			}else{
 				followLine();
-				break;
-			case 3:				//end of course look for flag
-				SetMotor(leftMotor, .1);
-				SetMotor(rightMotor, -.1);
-				break;
+			};
+			SetPin(PIN_F1, 0);
+		}else{//end of course look for flag
+			SetMotor(leftMotor, .1);
+			SetMotor(rightMotor, -.1);
+			while(true);
 		}
 	}
 }
@@ -208,7 +218,7 @@ void followWall(void){ // includes avoiding other robots
 			wasRightWall = true;
 			wasLeftWall = false;
 		}
-		else if(rightSensor > 700){
+		else if(rightSensor > 600){
 			SetMotor(leftMotor, -.25);
 			SetMotor(rightMotor, .8);
 		}
@@ -227,7 +237,7 @@ void followWall(void){ // includes avoiding other robots
 			wasLeftWall = true;
 			wasRightWall = false;
 		}
-		else if(leftSensor > 700){
+		else if(leftSensor > 600){
 			SetMotor(leftMotor, .8);
 			SetMotor(rightMotor, -.25);
 		}
@@ -256,21 +266,13 @@ void followLine(void){
 						SetMotor(rightMotor, 1);
 				}
 				else if (line[5]>0.5&&line[4]>0.5){
-						SetMotor(leftMotor, 1);
-						SetMotor(rightMotor, .8);
+						SetMotor(leftMotor, .8);
+						SetMotor(rightMotor, .4);
 				}
 				else if (line[2]>0.5&&line[3]>0.5){
-						SetMotor(leftMotor, .8);
-						SetMotor(rightMotor, 1);
+						SetMotor(leftMotor, .4);
+						SetMotor(rightMotor, .8);
 				}
-				else if (line[6]>0.5&&line[5]>0.5){
-						SetMotor(leftMotor, .6);
-						SetMotor(rightMotor, .3);
-				}
-				else if (line[1]>0.5&&line[2]>0.5){
-						SetMotor(leftMotor, .6);
-						SetMotor(rightMotor, .3);
-				}	
 				else if (line[7]>0.5&&line[6]>0.5){
 						SetMotor(leftMotor, .3);
 						SetMotor(rightMotor, -.25);
@@ -279,12 +281,63 @@ void followLine(void){
 						SetMotor(leftMotor, -.25);
 						SetMotor(rightMotor, .3);
 				}
+				else if (line[6]>0.5&&line[5]>0.5){
+						SetMotor(leftMotor, .6);
+						SetMotor(rightMotor, .1);
+				}
+				else if (line[1]>0.5&&line[2]>0.5){
+						SetMotor(leftMotor, .6);
+						SetMotor(rightMotor, .1);
+				}
+				
 }
 
 
-void lookForLine(void){
-	
+void findLine(void){
+	static int lineFound = 0;
+	if (wasLeftWall) {
+			SetMotor(leftMotor, 1);
+			SetMotor(rightMotor, .2);
+	}
+	else {
+		SetMotor(leftMotor, .2);
+		SetMotor(rightMotor, 1);
+	}
+	if (linePresent()){
+		 lineFound+=1;
+	}else{
+		 lineFound = 0;
+	}
+	if(lineFound == 40){
+		 stage = 2;
+	}
 }
+
+void findEnd(void){
+	static int endFound = 0;
+	static int bitchin = 0;
+	if (wasLeftWall) {
+			SetMotor(leftMotor, .5);
+			SetMotor(rightMotor, .2);
+	}
+	else {
+		SetMotor(leftMotor, .2);
+		SetMotor(rightMotor, .5);
+	}
+	if (!linePresent()){
+		 endFound+=1;
+	}else{
+		 endFound = 0;
+	}
+	if(endFound == 50){
+		bitchin+=1;
+		endFound = 0;
+	}
+	if (bitchin==4){
+		stage = 3;
+	}
+}
+
 void squareDance(void){
 	int turns = 0;
 	bool postTurn = true;
