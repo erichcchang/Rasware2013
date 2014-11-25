@@ -75,8 +75,8 @@ int main(void) {
 	initIRSensor(); 
 	initMotor();
 	initGPIOLineSensor();
-	//initServo();
-	//SetServo(servo,0);
+	initServo();
+	SetServo(servo,0);
 	stage = 0;
 	//while(1){followLine();}
 	//while(1){followWall();}
@@ -122,7 +122,7 @@ int main(void) {
 bool wallPresent(void){
 	rightSensor = ADCRead(adc[1])*1000;
 	leftSensor = ADCRead(adc[2])*1000;
-	if (rightSensor>300||leftSensor>300){
+	if (rightSensor>450||leftSensor>450){
 		return true;
 	}
 	else {
@@ -169,7 +169,7 @@ void findObject(void) {
 		}
 	}
 	
-	//SetServo(servo,1);
+	SetServo(servo,1);
 	SetMotor(leftMotor, 0);
 	SetMotor(rightMotor, 0);
 	SysTick_Wait10ms(40);
@@ -211,12 +211,28 @@ void findObject(void) {
 //	else if (frontSensor<1000){
 //		SysTick_Wait10ms(50);
 //	}
-	SysTick_Wait10ms(125);
+	SysTick_Wait10ms(158);
 	SetMotor(rightMotor, 0); //STOP 
 	SetMotor(leftMotor, 0);
-	//SetServo(servo,0);
-	SysTick_Wait10ms(1000);	
-
+	SetPin(PIN_F3, 1);
+	SetServo(servo,0);
+	SysTick_Wait10ms(50);	
+	SetMotor(rightMotor, -.5); 
+	SetMotor(leftMotor, .5);
+	while(true){
+		SetPin(PIN_F3, 1);
+		SetPin(PIN_F2, 0);
+		SetPin(PIN_F1, 0);
+		SysTick_Wait10ms(50);
+		SetPin(PIN_F3, 0);
+		SetPin(PIN_F2, 1);
+		SetPin(PIN_F1, 0);
+		SysTick_Wait10ms(50);
+		SetPin(PIN_F3, 0);
+		SetPin(PIN_F2, 0);
+		SetPin(PIN_F1, 1);
+		SysTick_Wait10ms(50);
+	}
 
 
 }
@@ -227,12 +243,12 @@ void turn90Degrees(int dir){
 	if (dir == LEFT) {
 			SetMotor(leftMotor, -1);		
 			SetMotor(rightMotor, 1);
-			SysTick_Wait10ms(80);
+			SysTick_Wait10ms(72);
 	}
 	if (dir == RIGHT){
 			SetMotor(leftMotor, 1);		
 			SetMotor(rightMotor, -1);
-			SysTick_Wait10ms(80);
+			SysTick_Wait10ms(72);
 	}
 	
 	stage = 1;
@@ -255,7 +271,7 @@ void followWall(void){ // includes avoiding other robots
 			wasRightWall = true;
 			wasLeftWall = false;
 		}
-		else if(rightSensor > 600){
+		else if(rightSensor > 650){
 			SetMotor(leftMotor, -.25);
 			SetMotor(rightMotor, .8);
 		}
@@ -274,7 +290,7 @@ void followWall(void){ // includes avoiding other robots
 			wasLeftWall = true;
 			wasRightWall = false;
 		}
-		else if(leftSensor > 600){
+		else if(leftSensor > 650){
 			SetMotor(leftMotor, .8);
 			SetMotor(rightMotor, -.25);
 		}
@@ -345,7 +361,7 @@ void findLine(void){
 	}else{
 		 lineFound = 0;
 	}
-	if(lineFound == 40){
+	if(lineFound == 40){		//were at 40
 		 stage = 2;
 	}
 }
@@ -367,6 +383,7 @@ void findEnd(void){
 		 endFound+=1;
 	}else{
 		 endFound = 0;
+		bitchin = 0;			///new addition
 	}
 	if(endFound == 50){
 		bitchin+=1;
